@@ -1,0 +1,7 @@
+# Alles unter tofu/files/ landet auf einer Linux-VM. Ohne diese Datei
+# schreibt Git bei core.autocrlf=true (Standard unter Windows) die Skripte
+# beim Auschecken auf CRLF um, und auf der VM scheitert schon
+# "set -euo pipefail\r".
+* text=auto eol=lf
+
+*.zip binary

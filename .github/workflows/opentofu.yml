@@ -1,0 +1,55 @@
+# Prueft Formatierung, Syntax und das Verhalten des OpenTofu-Codes (fmt,
+# validate, test mit gemockten Providern) und das Einrichtungsskript. Kein
+# plan/apply: die OpenStack-API der DHBW ist von einem gehosteten Runner
+# nicht erreichbar, das Ausrollen uebernimmt der App-Store-Worker.
+
+name: 'OpenTofu'
+
+on:
+  push:
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  opentofu:
+    name: 'OpenTofu'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: tofu
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Gleiche Version wie im App-Store-Worker
+    - name: Setup OpenTofu
+      uses: opentofu/setup-opentofu@v2
+      with:
+        tofu_version: 1.13.1
+        tofu_wrapper: false
+
+    - name: OpenTofu Init
+      run: tofu init -backend=false
+
+    - name: OpenTofu Format
+      run: tofu fmt -check -recursive
+
+    - name: OpenTofu Validate
+      run: tofu validate
+
+    - name: OpenTofu Test
+      run: tofu test
+
+    - name: ShellCheck
+      run: shellcheck files/*.sh
+
+    # ast statt py_compile: kein __pycache__ unter files/, das sonst mit
+    # auf die VM reisen wuerde
+    - name: Python-Syntax
+      run: python3 -c 'import ast, sys; ast.parse(open(sys.argv[1]).read())' files/app.py
