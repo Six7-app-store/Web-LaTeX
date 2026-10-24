@@ -170,6 +170,22 @@ locals {
       ipv4 = one([for ip in port.all_fixed_ips : ip if !strcontains(ip, ":")])
     }
   }
+  secondary_gateway = local.dual ? data.openstack_networking_subnet_v2.v4[0].gateway_ip : ""
+}
+
+# Gateway des IPv4-Netzes fuer die eigene Routing-Tabelle der zweiten
+# Schnittstelle (dual), siehe cloud-init.tofu.
+data "openstack_networking_subnet_v2" "v4" {
+  count      = local.dual ? 1 : 0
+  network_id = var.network_v4_uuid
+  ip_version = 4
+
+  lifecycle {
+    postcondition {
+      condition     = self.gateway_ip != ""
+      error_message = "Das IPv4-Netz in network_v4_uuid hat kein Gateway; dual braucht eins fuer die Antworten der zweiten Schnittstelle."
+    }
+  }
 }
 
 resource "openstack_compute_instance_v2" "team_vm" {

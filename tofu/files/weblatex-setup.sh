@@ -96,7 +96,10 @@ install -m 644 /opt/weblatex/nginx-weblatex.conf /etc/nginx/sites-available/webl
 ln -sf /etc/nginx/sites-available/weblatex /etc/nginx/sites-enabled/weblatex
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
-systemctl reload nginx
+# restart statt reload: reload scheitert, falls nginx nach der Installation
+# nicht gestartet wurde
+systemctl enable nginx
+systemctl restart nginx
 
 # Erst fertig melden, wenn der Login über nginx antwortet
 for _ in $(seq 1 30); do

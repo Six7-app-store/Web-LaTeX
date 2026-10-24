@@ -10,6 +10,11 @@ mock_provider "openstack" {
       id = "00000000-0000-0000-0000-00000000image"
     }
   }
+  mock_data "openstack_networking_subnet_v2" {
+    defaults = {
+      gateway_ip = "141.72.10.1"
+    }
+  }
   mock_resource "openstack_networking_port_v2" {
     defaults = {
       all_fixed_ips = ["141.72.10.7", "2001:db8:4::7"]
@@ -192,6 +197,10 @@ run "dual_haengt_ipv4_als_zweite_schnittstelle_an" {
   assert {
     condition     = yamldecode(one([for f in yamldecode(local.cloud_init["b"]).write_files : f.content if f.path == "/etc/netplan/60-secondary-ipv4.yaml"])).network.ethernets.secondary.routing-policy[0].from == "141.72.10.7"
     error_message = "cloud-init muss die IPv4-Schnittstelle mit eigener Routing-Tabelle einrichten."
+  }
+  assert {
+    condition     = yamldecode(one([for f in yamldecode(local.cloud_init["b"]).write_files : f.content if f.path == "/etc/netplan/60-secondary-ipv4.yaml"])).network.ethernets.secondary.routes[0].via == "141.72.10.1"
+    error_message = "Die eigene Tabelle braucht die Default-Route ueber das Gateway des IPv4-Netzes."
   }
 }
 
